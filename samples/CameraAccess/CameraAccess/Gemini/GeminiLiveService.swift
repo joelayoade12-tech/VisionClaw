@@ -18,6 +18,8 @@ class GeminiLiveService: ObservableObject {
   var onTurnComplete: (() -> Void)?
   var onInterrupted: (() -> Void)?
   var onDisconnected: ((String?) -> Void)?
+  var onInputTranscription: ((String) -> Void)?
+  var onOutputTranscription: ((String) -> Void)?
 
   // Latency tracking
   private var lastUserSpeechEnd: Date?
@@ -287,13 +289,14 @@ class GeminiLiveService: ObservableObject {
       if let inputTranscription = serverContent["inputTranscription"] as? [String: Any],
          let text = inputTranscription["text"] as? String, !text.isEmpty {
         NSLog("[Gemini] You: %@", text)
-        // Track when user was last speaking (for latency measurement)
         lastUserSpeechEnd = Date()
         responseLatencyLogged = false
+        onInputTranscription?(text)
       }
       if let outputTranscription = serverContent["outputTranscription"] as? [String: Any],
          let text = outputTranscription["text"] as? String, !text.isEmpty {
         NSLog("[Gemini] AI: %@", text)
+        onOutputTranscription?(text)
       }
     }
   }

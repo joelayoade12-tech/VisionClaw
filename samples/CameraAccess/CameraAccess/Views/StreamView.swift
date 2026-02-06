@@ -49,19 +49,29 @@ struct StreamView: View {
         VStack {
           GeminiStatusBar(geminiVM: geminiVM)
           Spacer()
-          if geminiVM.isModelSpeaking {
-            HStack(spacing: 8) {
-              Image(systemName: "speaker.wave.2.fill")
-                .foregroundColor(.white)
-                .font(.system(size: 14))
-              SpeakingIndicator()
+
+          VStack(spacing: 8) {
+            if !geminiVM.userTranscript.isEmpty || !geminiVM.aiTranscript.isEmpty {
+              TranscriptView(
+                userText: geminiVM.userTranscript,
+                aiText: geminiVM.aiTranscript
+              )
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
-            .background(Color.black.opacity(0.5))
-            .cornerRadius(20)
-            .padding(.bottom, 80)
+
+            if geminiVM.isModelSpeaking {
+              HStack(spacing: 8) {
+                Image(systemName: "speaker.wave.2.fill")
+                  .foregroundColor(.white)
+                  .font(.system(size: 14))
+                SpeakingIndicator()
+              }
+              .padding(.horizontal, 16)
+              .padding(.vertical, 8)
+              .background(Color.black.opacity(0.5))
+              .cornerRadius(20)
+            }
           }
+          .padding(.bottom, 80)
         }
         .padding(.all, 24)
       }

@@ -41,6 +41,33 @@ struct GeminiStatusBar: View {
   }
 }
 
+struct TranscriptView: View {
+  let userText: String
+  let aiText: String
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 6) {
+      if !userText.isEmpty {
+        Text(userText)
+          .font(.system(size: 14))
+          .foregroundColor(.white.opacity(0.7))
+          .lineLimit(2)
+      }
+      if !aiText.isEmpty {
+        Text(aiText)
+          .font(.system(size: 16, weight: .medium))
+          .foregroundColor(.white)
+          .lineLimit(4)
+      }
+    }
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .padding(.horizontal, 16)
+    .padding(.vertical, 10)
+    .background(Color.black.opacity(0.6))
+    .cornerRadius(12)
+  }
+}
+
 struct SpeakingIndicator: View {
   @State private var animating = false
 

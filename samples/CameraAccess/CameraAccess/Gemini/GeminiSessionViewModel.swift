@@ -7,6 +7,8 @@ class GeminiSessionViewModel: ObservableObject {
   @Published var connectionState: GeminiConnectionState = .disconnected
   @Published var isModelSpeaking: Bool = false
   @Published var errorMessage: String?
+  @Published var userTranscript: String = ""
+  @Published var aiTranscript: String = ""
   private let geminiService = GeminiLiveService()
   private let audioManager = AudioManager()
   private var lastVideoFrameTime: Date = .distantPast
@@ -33,7 +35,28 @@ class GeminiSessionViewModel: ObservableObject {
       self?.audioManager.stopPlayback()
     }
 
-    geminiService.onTurnComplete = nil
+    geminiService.onTurnComplete = { [weak self] in
+      guard let self else { return }
+      Task { @MainActor in
+        // Clear user transcript when AI finishes responding
+        self.userTranscript = ""
+      }
+    }
+
+    geminiService.onInputTranscription = { [weak self] text in
+      guard let self else { return }
+      Task { @MainActor in
+        self.userTranscript += text
+        self.aiTranscript = ""
+      }
+    }
+
+    geminiService.onOutputTranscription = { [weak self] text in
+      guard let self else { return }
+      Task { @MainActor in
+        self.aiTranscript += text
+      }
+    }
 
     // Handle unexpected disconnection
     geminiService.onDisconnected = { [weak self] reason in
@@ -106,6 +129,8 @@ class GeminiSessionViewModel: ObservableObject {
     isGeminiActive = false
     connectionState = .disconnected
     isModelSpeaking = false
+    userTranscript = ""
+    aiTranscript = ""
   }
 
   func sendVideoFrameIfThrottled(image: UIImage) {
