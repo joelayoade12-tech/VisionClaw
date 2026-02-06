@@ -253,6 +253,8 @@ class GeminiLiveService: ObservableObject {
               isModelSpeaking = true
             }
             onAudioReceived?(audioData)
+          } else if let text = part["text"] as? String {
+            NSLog("[Gemini] %@", text)
           }
         }
       }
@@ -260,6 +262,15 @@ class GeminiLiveService: ObservableObject {
       if let turnComplete = serverContent["turnComplete"] as? Bool, turnComplete {
         isModelSpeaking = false
         onTurnComplete?()
+      }
+
+      if let inputTranscription = serverContent["inputTranscription"] as? [String: Any],
+         let text = inputTranscription["text"] as? String, !text.isEmpty {
+        NSLog("[Gemini] You: %@", text)
+      }
+      if let outputTranscription = serverContent["outputTranscription"] as? [String: Any],
+         let text = outputTranscription["text"] as? String, !text.isEmpty {
+        NSLog("[Gemini] AI: %@", text)
       }
     }
   }
