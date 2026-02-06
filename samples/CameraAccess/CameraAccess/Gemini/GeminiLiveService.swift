@@ -19,6 +19,10 @@ class GeminiLiveService: ObservableObject {
   var onInterrupted: (() -> Void)?
   var onDisconnected: ((String?) -> Void)?
 
+  // Latency tracking
+  private var lastUserSpeechEnd: Date?
+  private var responseLatencyLogged = false
+
   private var webSocketTask: URLSessionWebSocketTask?
   private var receiveTask: Task<Void, Never>?
   private var connectContinuation: CheckedContinuation<Bool, Never>?
@@ -152,7 +156,10 @@ class GeminiLiveService: ObservableObject {
       "setup": [
         "model": GeminiConfig.model,
         "generationConfig": [
-          "responseModalities": ["AUDIO"]
+          "responseModalities": ["AUDIO"],
+          "thinkingConfig": [
+            "thinkingBudget": 0
+          ]
         ],
         "systemInstruction": [
           "parts": [
@@ -164,8 +171,8 @@ class GeminiLiveService: ObservableObject {
             "disabled": false,
             "startOfSpeechSensitivity": "START_SENSITIVITY_LOW",
             "endOfSpeechSensitivity": "END_SENSITIVITY_LOW",
-            "silenceDurationMs": 2000,
-            "prefixPaddingMs": 100
+            "silenceDurationMs": 500,
+            "prefixPaddingMs": 40
           ]
         ],
         "inputAudioTranscription": [:] as [String: Any],
@@ -257,6 +264,12 @@ class GeminiLiveService: ObservableObject {
              let audioData = Data(base64Encoded: base64Data) {
             if !isModelSpeaking {
               isModelSpeaking = true
+              // Log latency: time from end of user speech to first audio response
+              if let speechEnd = lastUserSpeechEnd, !responseLatencyLogged {
+                let latency = Date().timeIntervalSince(speechEnd)
+                NSLog("[Latency] %.0fms (user speech end -> first audio)", latency * 1000)
+                responseLatencyLogged = true
+              }
             }
             onAudioReceived?(audioData)
           } else if let text = part["text"] as? String {
@@ -267,12 +280,16 @@ class GeminiLiveService: ObservableObject {
 
       if let turnComplete = serverContent["turnComplete"] as? Bool, turnComplete {
         isModelSpeaking = false
+        responseLatencyLogged = false
         onTurnComplete?()
       }
 
       if let inputTranscription = serverContent["inputTranscription"] as? [String: Any],
          let text = inputTranscription["text"] as? String, !text.isEmpty {
         NSLog("[Gemini] You: %@", text)
+        // Track when user was last speaking (for latency measurement)
+        lastUserSpeechEnd = Date()
+        responseLatencyLogged = false
       }
       if let outputTranscription = serverContent["outputTranscription"] as? [String: Any],
          let text = outputTranscription["text"] as? String, !text.isEmpty {
