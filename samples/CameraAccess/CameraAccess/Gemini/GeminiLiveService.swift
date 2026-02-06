@@ -156,10 +156,10 @@ class GeminiLiveService: ObservableObject {
       "setup": [
         "model": GeminiConfig.model,
         "generationConfig": [
-          "responseModalities": ["AUDIO"]
-        ],
-        "thinkingConfig": [
-          "thinkingBudget": 0
+          "responseModalities": ["AUDIO"],
+          "thinkingConfig": [
+            "thinkingBudget": 0
+          ]
         ],
         "systemInstruction": [
           "parts": [
