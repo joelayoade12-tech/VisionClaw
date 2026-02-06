@@ -46,32 +46,19 @@ struct TranscriptView: View {
   let aiText: String
 
   var body: some View {
-    ScrollViewReader { proxy in
-      ScrollView(.vertical, showsIndicators: false) {
-        VStack(alignment: .leading, spacing: 6) {
-          if !userText.isEmpty {
-            Text(userText)
-              .font(.system(size: 14))
-              .foregroundColor(.white.opacity(0.7))
-          }
-          if !aiText.isEmpty {
-            Text(aiText)
-              .font(.system(size: 16, weight: .medium))
-              .foregroundColor(.white)
-          }
-          Color.clear
-            .frame(height: 1)
-            .id("bottom")
-        }
+    VStack(alignment: .leading, spacing: 6) {
+      if !userText.isEmpty {
+        Text(userText)
+          .font(.system(size: 14))
+          .foregroundColor(.white.opacity(0.7))
       }
-      .onChange(of: aiText) { _ in
-        withAnimation { proxy.scrollTo("bottom", anchor: .bottom) }
-      }
-      .onChange(of: userText) { _ in
-        withAnimation { proxy.scrollTo("bottom", anchor: .bottom) }
+      if !aiText.isEmpty {
+        Text(aiText)
+          .font(.system(size: 16, weight: .medium))
+          .foregroundColor(.white)
       }
     }
-    .frame(maxWidth: .infinity, maxHeight: 200, alignment: .leading)
+    .frame(maxWidth: .infinity, alignment: .leading)
     .padding(.horizontal, 16)
     .padding(.vertical, 10)
     .background(Color.black.opacity(0.6))
