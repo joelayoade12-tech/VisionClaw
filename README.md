@@ -1,6 +1,6 @@
 # VisionClaw 🦞+😎
 
-![VisionClaw](assets/taaser.png)
+![VisionClaw](assets/title.png)
 
 A real-time AI assistant for Meta Ray-Ban smart glasses. See what you see, hear what you say, and take actions on your behalf -- all through voice.
 
@@ -21,7 +21,7 @@ The glasses camera streams at ~1fps to Gemini for visual context, while audio fl
 
 ## How It Works
 
-![How It Works](assets/how-it-works.png)
+![How It Works](assets/how.png)
 
 ```
 Meta Ray-Ban Glasses (or iPhone camera)
