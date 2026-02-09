@@ -85,9 +85,20 @@ Select your iPhone as the target device and hit Run (Cmd+R).
 3. Talk to the AI -- it can see through your iPhone camera
 
 **With Meta Ray-Ban glasses:**
-1. Pair your glasses via the Meta AI app (enable Developer Mode)
-2. Tap **"Start Streaming"** in the app
-3. Tap the **AI button** for voice + vision conversation
+
+First, enable Developer Mode in the Meta AI app:
+
+1. Open the **Meta AI** app on your iPhone
+2. Go to **Settings** (gear icon, bottom left)
+3. Tap **App Info**
+4. Tap the **App version** number **5 times** -- this unlocks Developer Mode
+5. Go back to Settings -- you'll now see a **Developer Mode** toggle. Turn it on.
+
+![How to enable Developer Mode](assets/dev_mode.png)
+
+Then in VisionClaw:
+1. Tap **"Start Streaming"** in the app
+2. Tap the **AI button** for voice + vision conversation
 
 ## Setup: OpenClaw (Optional)
 
