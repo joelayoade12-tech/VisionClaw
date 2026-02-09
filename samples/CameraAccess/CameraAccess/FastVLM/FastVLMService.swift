@@ -46,8 +46,8 @@ class FastVLMService {
     private var loadState = LoadState.idle
     private var currentTask: Task<Void, Never>?
 
-    private var lastFrameTime = Date.distantPast
-    private let frameInterval: TimeInterval = 1.0
+    private var lastAnalyzeStart = Date.distantPast
+    private var frameCount = 0
 
     // MARK: - Init
 
@@ -108,8 +108,16 @@ class FastVLMService {
             return
         }
 
+        let gap = Date().timeIntervalSince(lastAnalyzeStart)
+        lastAnalyzeStart = Date()
+        frameCount += 1
+        let thisFrame = frameCount
+        print("[FastVLM] Frame #\(thisFrame) - gap since last: \(Int(gap * 1000))ms")
+
         isRunning = true
         currentTask?.cancel()
+
+        let frameStart = Date()
 
         let task = Task {
             do {
@@ -117,6 +125,7 @@ class FastVLMService {
 
                 if Task.isCancelled { return }
 
+                let prepareStart = Date()
                 let userInput = UserInput(
                     prompt: .text(prompt),
                     images: [.ciImage(ciImage)]
@@ -127,9 +136,11 @@ class FastVLMService {
                         self.evaluationState = .processingPrompt
                     }
 
-                    let llmStart = Date()
                     let input = try await context.processor.prepare(input: userInput)
+                    let prepareTime = Date().timeIntervalSince(prepareStart)
+                    print("[FastVLM] Frame #\(thisFrame) - image prep: \(Int(prepareTime * 1000))ms")
 
+                    let generateStart = Date()
                     var seenFirstToken = false
 
                     let result = try MLXLMCommon.generate(
@@ -139,13 +150,14 @@ class FastVLMService {
 
                         if !seenFirstToken {
                             seenFirstToken = true
-                            let duration = Date().timeIntervalSince(llmStart)
+                            let ttftDuration = Date().timeIntervalSince(generateStart)
                             let text = context.tokenizer.decode(tokens: tokens)
                             Task { @MainActor in
                                 self.evaluationState = .generatingResponse
                                 self.output = text
-                                self.ttft = "\(Int(duration * 1000))ms"
+                                self.ttft = "\(Int(ttftDuration * 1000))ms"
                             }
+                            print("[FastVLM] Frame #\(thisFrame) - TTFT: \(Int(ttftDuration * 1000))ms")
                         }
 
                         if tokens.count % self.displayEveryNTokens == 0 {
@@ -161,16 +173,21 @@ class FastVLMService {
                         return .more
                     }
 
+                    let generateTime = Date().timeIntervalSince(generateStart)
+                    print("[FastVLM] Frame #\(thisFrame) - generate: \(Int(generateTime * 1000))ms (\(result.output.count) chars)")
+
                     return result
                 }
 
                 if !Task.isCancelled {
                     self.output = result.output
+                    let totalTime = Date().timeIntervalSince(frameStart)
+                    print("[FastVLM] Frame #\(thisFrame) - TOTAL: \(Int(totalTime * 1000))ms")
                 }
             } catch {
                 if !Task.isCancelled {
                     output = "Failed: \(error)"
-                    print("[FastVLM] Inference error: \(error)")
+                    print("[FastVLM] Frame #\(thisFrame) inference error: \(error)")
                 }
             }
 
@@ -183,13 +200,9 @@ class FastVLMService {
         currentTask = task
     }
 
-    /// Called from the video frame pipeline. Throttles to ~1fps and auto-analyzes.
+    /// Called from the video frame pipeline. Runs continuously — back-pressure via isRunning guard.
     func analyzeIfReady(image: UIImage) {
-        guard isActive else { return }
-
-        let now = Date()
-        guard now.timeIntervalSince(lastFrameTime) >= frameInterval else { return }
-        lastFrameTime = now
+        guard isActive, !isRunning else { return }
 
         Task {
             await analyze(image)
