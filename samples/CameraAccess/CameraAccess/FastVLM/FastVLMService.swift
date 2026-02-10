@@ -30,7 +30,7 @@ class FastVLMService {
 
     // MARK: - Configuration
 
-    var prompt = "Describe what you see briefly, about 15 words or less."
+    var prompt = "List the objects you see, separated by commas. Only output object labels, nothing else."
 
     // MARK: - Private
 
